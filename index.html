@@ -1,209 +1,353 @@
 <!DOCTYPE html>
-<html lang="sv">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DS Bodycam AI Copilot</title>
+    <title>DS Bodycam AI Copilot - DaVinci Resolve Studio</title>
     <link rel="stylesheet" href="./css/styles.css">
 </head>
 <body>
-    <!-- Top Header -->
-    <header>
-        <div class="header-top">
-            <div class="logo-group">
-                <div class="app-icon">DS</div>
-                <div class="app-title">DS Bodycam AI Copilot</div>
-                <span class="badge-version">v1.0</span>
+    <!-- Main Application Header -->
+    <header class="app-header">
+        <div class="header-row-top">
+            <div class="brand-badge-group">
+                <div class="app-badge-mark">DS</div>
+                <div class="app-brand-title">Bodycam AI Copilot</div>
+                <span class="tag-version">PRO v1.0</span>
             </div>
-            <div class="status-badges">
-                <div class="status-pill" id="pillResolve" title="DaVinci Resolve Scripting API status">
-                    <span class="status-dot" id="dotResolve"></span>
-                    <span id="txtResolve">Resolve</span>
+            <div class="telemetry-pills">
+                <div class="telemetry-pill" id="pillResolve" title="DaVinci Resolve Scripting API status">
+                    <span class="status-indicator-dot" id="dotResolve"></span>
+                    <span id="txtResolve">Resolve Disconnected</span>
                 </div>
-                <div class="status-pill" id="pillServer" title="Lokal Python AI-Server status (localhost:8765)">
-                    <span class="status-dot" id="dotServer"></span>
-                    <span id="txtServer">AI-Server</span>
+                <div class="telemetry-pill" id="pillServer" title="Local Python Copilot Engine status">
+                    <span class="status-indicator-dot" id="dotServer"></span>
+                    <span id="txtServer">Engine Offline</span>
                 </div>
+                <button class="btn-header-gear" id="btnOpenSettings" title="API Settings & Providers">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
             </div>
         </div>
-        <div class="header-meta">
+        <div class="header-row-meta">
             <div>
-                <strong>Projekt:</strong> <span id="lblProject">Laddar...</span> |
-                <strong>Tidslinje:</strong> <span id="lblTimeline">-</span>
+                <strong style="color: var(--text-tertiary);">PROJECT:</strong> <span id="lblProject" class="mono">Initializing...</span>
+                <span style="color: var(--border-subtle); margin: 0 6px;">|</span>
+                <strong style="color: var(--text-tertiary);">TIMELINE:</strong> <span id="lblTimeline" class="mono">Standby</span>
             </div>
             <div>
-                <strong>Playhead:</strong> <span class="tc-display" id="lblTimecode" title="Klicka för att uppdatera">00:00:00:00</span>
+                <strong style="color: var(--text-tertiary);">PLAYHEAD:</strong> <span class="tc-telemetry-tag" id="lblTimecode" title="Click to refresh telemetry">00:00:00:00</span>
             </div>
         </div>
     </header>
 
-    <!-- Navigation Tabs (NO RENDER TAB!) -->
-    <nav class="nav-tabs">
-        <button class="tab-btn active" data-tab="tab-chat">
-            💬 AI Copilot
+    <!-- Navigation Tabs (Strictly Monochromatic SVG Icons) -->
+    <nav class="app-nav-tabs">
+        <button class="nav-tab-item active" data-tab="tab-copilot">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            AI Copilot
         </button>
-        <button class="tab-btn" data-tab="tab-timeline">
-            ⏱️ Tidslinje
+        <button class="nav-tab-item" data-tab="tab-inspector">
+            <svg class="icon" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+            Timeline Inspector
         </button>
-        <button class="tab-btn" data-tab="tab-snapshots">
-            📸 Snapshots
+        <button class="nav-tab-item" data-tab="tab-analysis">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            Frame & Video Analysis
         </button>
-        <button class="tab-btn" data-tab="tab-tools">
-            ⚡ Snabbverktyg
+        <button class="nav-tab-item" data-tab="tab-tools">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            Automation & Tools
+        </button>
+        <button class="nav-tab-item" data-tab="tab-settings">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            Settings & API
         </button>
     </nav>
 
-    <!-- Tab 1: AI Copilot (Chat) -->
-    <main id="tab-chat" class="tab-content active">
-        <div class="chat-container">
-            <!-- Quick Chips -->
-            <div class="quick-prompts">
-                <button class="prompt-chip" data-prompt="Analysera klipptempo och föreslå förbättringar">📊 Analysera tempo</button>
-                <button class="prompt-chip" data-prompt="Vilka ställen på tidslinjen behöver maskas eller censureras (blur)?">🛡️ Föreslå blur/censor</button>
-                <button class="prompt-chip" data-prompt="Hur bör jag hantera 911-ljud och radioanrop för bäst retention?">🎙️ Audio ducking</button>
-                <button class="prompt-chip" data-prompt="Generera 4 fängslande YouTube-titlar för detta fall">🎯 YouTube-titlar</button>
+    <!-- WORKSPACE 1: AI Copilot Command Center -->
+    <main id="tab-copilot" class="workspace-panel active">
+        <div class="copilot-command-layout">
+            <!-- Quick Action Strips -->
+            <div class="quick-action-strip">
+                <button class="btn-quick-pill" data-prompt="Run a full video audit across all timeline tracks">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    Full Video Audit
+                </button>
+                <button class="btn-quick-pill" data-prompt="Analyze clip pacing and detect dead-air sequences">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    Pacing & Dead-Air Analysis
+                </button>
+                <button class="btn-quick-pill" data-prompt="Scan footage for civilian faces, license plates, and MDT screens requiring privacy blur">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    Auto-Censor & PII Blur
+                </button>
+                <button class="btn-quick-pill" data-prompt="Configure Fairlight audio ducking and voice isolation">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                    Fairlight Audio Ducking
+                </button>
+                <button class="btn-quick-pill" data-prompt="Generate chapter markers and incident tags">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                    Generate Markers & Chapters
+                </button>
+                <button class="btn-quick-pill" data-prompt="Generate high-retention YouTube titles, metadata, and packaging for this case">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
+                    YouTube Metadata & Packaging
+                </button>
             </div>
 
-            <!-- Chat Stream -->
-            <div class="chat-history" id="chatHistory">
-                <div class="chat-msg assistant">
-                    <div class="msg-header">
-                        <span>DS AI Copilot</span> • <span>System</span>
+            <!-- Command Stream -->
+            <div class="command-stream-container" id="chatStream">
+                <div class="stream-message-bubble assistant">
+                    <div class="stream-header">
+                        <span>DS COPILOT ENGINE</span> • <span class="mono">SYSTEM READY</span>
                     </div>
-                    <div class="msg-bubble">
-                        Välkommen till <strong>DS Bodycam AI Copilot</strong> för DaVinci Resolve Studio!<br><br>
-                        Jag är redo att assistera dig med redigeringen av ditt bodycam- och brottsfallsmaterial.
-                        Klicka på <strong>"Analysera Tidslinje"</strong> för att ladda in dina klipp, eller <strong>"Ta Snapshot"</strong> för att låta mig granska en bildruta direkt från spelaren.
+                    <div class="stream-content">
+                        <strong>DS Bodycam AI Copilot</strong> initialized.<br><br>
+                        Ready to assist with professional NLE editorial operations in DaVinci Resolve Studio. Click <strong>"Full Video Audit"</strong> to inspect your complete timeline, or <strong>"Timeline Inspector"</strong> to view track telemetry.
                     </div>
                 </div>
             </div>
 
-            <!-- Chat Input -->
-            <div class="chat-input-box">
-                <textarea id="chatInput" class="chat-textarea" placeholder="Skriv din instruktion eller fråga till AI-copiloten... (Enter för att skicka, Shift+Enter för radbrytning)"></textarea>
-                <button id="btnSendChat" class="btn-send">Skicka</button>
+            <!-- Command Input Bar -->
+            <div class="command-input-container">
+                <div class="command-input-row">
+                    <textarea id="cmdInput" class="command-textarea" placeholder="Ask Copilot to analyze footage, find errors, or execute Resolve commands... (Enter to send, Shift+Enter for newline)"></textarea>
+                </div>
+                <div class="command-input-controls">
+                    <div class="model-selector-pill" id="lblActiveModel">
+                        ENGINE: STANDBY
+                    </div>
+                    <button id="btnSendCmd" class="btn-command-send">
+                        <span>Send</span>
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </div>
             </div>
         </div>
     </main>
 
-    <!-- Tab 2: Tidslinje (Timeline Explorer & Analysis) -->
-    <section id="tab-timeline" class="tab-content">
-        <div class="timeline-header-card">
-            <button id="btnAnalyzeTimeline" class="btn-large">
-                🔍 Analysera Tidslinje Nu
-            </button>
-            <div class="stats-grid">
-                <div class="stat-box">
-                    <div class="stat-value" id="statClips">0</div>
-                    <div class="stat-label">Klipp</div>
+    <!-- WORKSPACE 2: Timeline Inspector -->
+    <section id="tab-inspector" class="workspace-panel">
+        <div class="nle-card">
+            <div class="nle-card-title">
+                <span>Timeline Telemetry & Structure</span>
+                <button id="btnInspectTimeline" class="btn-primary-action">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                    Inspect Timeline
+                </button>
+            </div>
+            <div class="telemetry-grid">
+                <div class="telemetry-cell">
+                    <div class="telemetry-val" id="statClips">0</div>
+                    <div class="telemetry-lbl">Clips Indexed</div>
                 </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="statTracks">0</div>
-                    <div class="stat-label">Videospår</div>
+                <div class="telemetry-cell">
+                    <div class="telemetry-val" id="statVideoTracks">0</div>
+                    <div class="telemetry-lbl">Video Tracks</div>
                 </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="statMarkers">0</div>
-                    <div class="stat-label">Markörer</div>
+                <div class="telemetry-cell">
+                    <div class="telemetry-val" id="statAudioTracks">0</div>
+                    <div class="telemetry-lbl">Audio Tracks</div>
                 </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="statDuration">-</div>
-                    <div class="stat-label">Tid</div>
+                <div class="telemetry-cell">
+                    <div class="telemetry-val" id="statDuration">00:00:00</div>
+                    <div class="telemetry-lbl">Total Runtime</div>
                 </div>
             </div>
-            <input type="text" id="clipSearchInput" class="search-box" placeholder="Sök bland klipp på tidslinjen...">
+            <input type="text" id="inspectorSearch" class="nle-search-field" placeholder="Filter clips by name, track (e.g. V1, A1), or timecode...">
         </div>
 
-        <!-- Clips Table -->
-        <div class="clips-table-container">
-            <table class="clips-table" id="clipsTable">
+        <div class="nle-table-viewport">
+            <table class="nle-data-table" id="tableClips">
                 <thead>
                     <tr>
-                        <th style="width: 45px;">Spår</th>
-                        <th>Klippnamn</th>
-                        <th style="width: 75px;">In (Frame)</th>
-                        <th style="width: 75px;">Ut (Frame)</th>
-                        <th style="width: 65px;">Längd</th>
-                        <th style="width: 65px;">Åtgärd</th>
+                        <th style="width: 50px;">Track</th>
+                        <th>Clip Identifier</th>
+                        <th style="width: 85px;">In (Frame)</th>
+                        <th style="width: 85px;">Out (Frame)</th>
+                        <th style="width: 75px;">Duration</th>
+                        <th style="width: 85px;">Command</th>
                     </tr>
                 </thead>
-                <tbody id="clipsTableBody">
+                <tbody id="tableClipsBody">
                     <tr>
-                        <td colspan="6" class="empty-state">Klicka på "Analysera Tidslinje Nu" för att läsa in klippen från DaVinci Resolve.</td>
+                        <td colspan="6" class="empty-state-notice">Click "Inspect Timeline" to load real-time item properties from DaVinci Resolve.</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </section>
 
-    <!-- Tab 3: Snapshots (Frame Capture directly from Player) -->
-    <section id="tab-snapshots" class="tab-content">
-        <div class="snapshot-info-banner">
-            📸 <strong>Direkt Bildrutefångst:</strong> Fångar bildrutan vid aktuell playhead i DaVinci Resolve och sparar som fullupplöst PNG så att AI:n kan se bildrutan omedelbart <em>helt utan videorendering eller export</em>.
+    <!-- WORKSPACE 3: Frame & Video Analysis -->
+    <section id="tab-analysis" class="workspace-panel">
+        <div class="nle-card">
+            <div class="nle-card-title">
+                <span>Playhead Lossless Frame Capture</span>
+                <span class="mono" style="font-size: 11px; color: var(--tech-cyan);">ZERO-EXPORT ENGINE</span>
+            </div>
+            <p style="font-size: 11.5px; color: var(--text-secondary);">
+                Captures a pristine, lossless PNG still directly from the active playhead position via DaVinci Resolve's Still Gallery in under 100ms. No video render job or timeline export required.
+            </p>
+            <div style="display: flex; gap: 8px;">
+                <button id="btnCaptureSnapshot" class="btn-primary-action" style="flex: 1;">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    Capture Current Frame
+                </button>
+                <button id="btnOpenSnapshotFolder" class="btn-secondary-action">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    Open Storage
+                </button>
+            </div>
         </div>
 
-        <div class="snapshot-bar">
-            <button id="btnTakeSnapshot" class="btn-large" style="flex: 1;">
-                📸 Ta Snapshot Nu
-            </button>
-            <button id="btnOpenSnapshotsFolder" class="btn-secondary">
-                📁 Öppna Mapp
-            </button>
-        </div>
-
-        <div class="snapshots-grid" id="snapshotsGrid">
-            <div class="empty-state" style="grid-column: 1 / -1;">
-                Inga bildrutor tagna än. Placera playhead i DaVinci-spelaren och klicka på "Ta Snapshot Nu".
+        <div class="snapshots-grid-layout" id="snapshotsGallery">
+            <div class="empty-state-notice" style="grid-column: 1 / -1;">
+                No frames captured yet. Move the playhead in DaVinci Resolve and click "Capture Current Frame".
             </div>
         </div>
     </section>
 
-    <!-- Tab 4: Snabbverktyg (Editing Shortcuts & Markers) -->
-    <section id="tab-tools" class="tab-content">
-        <div class="tools-card">
-            <div class="card-title">📌 Sätt Markör vid Aktuell Playhead</div>
-            <div class="form-group">
-                <label>Färgkod / Kategori:</label>
-                <div class="color-options">
-                    <label class="color-radio">
-                        <input type="radio" name="markerColor" value="Red" checked>
-                        <span style="color: #ef4444;">🔴 Röd (Blur/Censor)</span>
-                    </label>
-                    <label class="color-radio">
-                        <input type="radio" name="markerColor" value="Blue">
-                        <span style="color: #38bdf8;">🔵 Blå (Händelse)</span>
-                    </label>
-                    <label class="color-radio">
-                        <input type="radio" name="markerColor" value="Green">
-                        <span style="color: #10b981;">🟢 Grön (Ljud/Repliker)</span>
-                    </label>
-                    <label class="color-radio">
-                        <input type="radio" name="markerColor" value="Yellow">
-                        <span style="color: #f59e0b;">🟡 Gul (B-roll/Klipp)</span>
-                    </label>
-                </div>
+    <!-- WORKSPACE 4: Automation & Tools -->
+    <section id="tab-tools" class="workspace-panel">
+        <div class="nle-card">
+            <div class="nle-card-title">
+                <span>Automated Timeline Operations</span>
+                <button id="btnRunFullAudit" class="btn-primary-action">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    Execute Full Video Audit
+                </button>
             </div>
-            <div class="form-group">
-                <label>Markörnamn:</label>
-                <input type="text" id="txtMarkerName" class="form-input" placeholder="t.ex. Maskera ansikte på vittne">
-            </div>
-            <div class="form-group">
-                <label>Anteckning (valfritt):</label>
-                <input type="text" id="txtMarkerNote" class="form-input" placeholder="Detaljer för redigeringen...">
-            </div>
-            <button id="btnAddMarker" class="btn-large">
-                Lägg till Markör på Tidslinjen
-            </button>
+            <p style="font-size: 11.5px; color: var(--text-secondary);">
+                Scans entire video runtime from 00:00:00:00 to end. Detects black flash frames, silent dead-air segments, third-party PII exposures, and Fairlight audio unbalances.
+            </p>
         </div>
 
-        <div class="tools-card">
-            <div class="card-title">⏩ Hoppa till Tidskod</div>
-            <div class="form-group">
-                <label>Måltidskod (TT:MM:SS:FF):</label>
-                <input type="text" id="txtJumpTimecode" class="form-input" placeholder="01:00:00:00">
+        <!-- Audit Findings Container -->
+        <div id="auditReportContainer" style="display: none; display: flex; flex-direction: column; gap: 8px;">
+            <div class="nle-card-title" style="padding: 0 4px;">
+                <span>Audit Findings & Action Matrix</span>
+                <span class="mono" id="lblAuditTotalIssues" style="color: var(--primary-resolve);">0 ISSUES</span>
             </div>
-            <button id="btnExecuteJump" class="btn-secondary" style="padding: 10px; font-weight: bold;">
-                Flytta DaVinci Playhead Hit
-            </button>
+            <div id="auditFindingsList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+        </div>
+
+        <!-- Marker Control Tool -->
+        <div class="nle-card">
+            <div class="nle-card-title">Color-Coded Marker Insertion</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div class="form-group-block">
+                    <label class="form-label-title">Marker Type / Color:</label>
+                    <select id="selMarkerColor" class="nle-select">
+                        <option value="Red">Red (Critical Error / Censor Cut)</option>
+                        <option value="Yellow">Yellow (Privacy / Civilian PII Blur)</option>
+                        <option value="Blue">Blue (Pacing / Trim Suggestion)</option>
+                        <option value="Green">Green (Highlight / Incident Hook)</option>
+                        <option value="Cyan">Cyan (Fairlight Audio Cues)</option>
+                    </select>
+                </div>
+                <div class="form-group-block">
+                    <label class="form-label-title">Timecode (Empty = Playhead):</label>
+                    <input type="text" id="inMarkerTc" class="nle-search-field mono" placeholder="Current Playhead">
+                </div>
+            </div>
+            <div class="form-group-block">
+                <label class="form-label-title">Marker Title:</label>
+                <input type="text" id="inMarkerTitle" class="nle-search-field" placeholder="e.g. Obscure Civilian Face / Suspect Vehicle Plate">
+            </div>
+            <div class="form-group-block">
+                <label class="form-label-title">Annotation Notes:</label>
+                <input type="text" id="inMarkerNote" class="nle-search-field" placeholder="Optional editorial instructions...">
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button id="btnInsertMarker" class="btn-primary-action" style="flex: 1;">
+                    Insert Marker in DaVinci Resolve
+                </button>
+                <button id="btnDuplicateTimeline" class="btn-secondary-action" title="Create a backup duplicate timeline before modifying">
+                    Create Safety Backup
+                </button>
+            </div>
+        </div>
+
+        <!-- Playhead Navigation Tool -->
+        <div class="nle-card">
+            <div class="nle-card-title">Direct Playhead Navigation</div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="inDirectTc" class="nle-search-field mono" style="flex: 1;" placeholder="01:00:00:00">
+                <button id="btnJumpDirectTc" class="btn-secondary-action" style="padding: 6px 14px;">
+                    Move Playhead
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- WORKSPACE 5: Settings & API Configuration -->
+    <section id="tab-settings" class="workspace-panel">
+        <div class="nle-card">
+            <div class="nle-card-title">AI Provider & Model Architecture</div>
+            <p style="font-size: 11.5px; color: var(--text-secondary);">
+                Configure your multimodal LLM provider. Google Gemini 2.5 is recommended for direct full-video, native audio understanding, and large token contexts.
+            </p>
+
+            <div class="form-group-block">
+                <label class="form-label-title">Active AI Provider:</label>
+                <select id="cfgProvider" class="nle-select">
+                    <option value="gemini">Google Gemini API (Multimodal Video & Audio)</option>
+                    <option value="openai">OpenAI API (GPT-4o / o3-mini)</option>
+                    <option value="anthropic">Anthropic API (Claude 3.7 Sonnet)</option>
+                    <option value="local_openai">Local OpenAI-Compatible (Ollama / vLLM / LM Studio)</option>
+                </select>
+            </div>
+
+            <div class="form-group-block">
+                <label class="form-label-title">Active Model Selection:</label>
+                <input type="text" id="cfgModel" class="nle-search-field mono" value="gemini-2.5-flash">
+            </div>
+
+            <div class="form-group-block">
+                <label class="form-label-title">API Authentication Key:</label>
+                <div class="input-password-wrap">
+                    <input type="password" id="cfgApiKey" class="nle-search-field mono" placeholder="Paste your API key here (saved locally in config.json)...">
+                    <button id="btnToggleKeyVis" class="btn-secondary-action" type="button">Show</button>
+                </div>
+            </div>
+
+            <div class="form-group-block" id="grpLocalEndpoint" style="display: none;">
+                <label class="form-label-title">Custom Local Endpoint URL:</label>
+                <input type="text" id="cfgEndpoint" class="nle-search-field mono" value="http://localhost:11434/v1">
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 6px;">
+                <button id="btnTestConnection" class="btn-secondary-action" style="flex: 1;">
+                    Test API Connection
+                </button>
+                <button id="btnSaveConfig" class="btn-primary-action" style="flex: 1;">
+                    Save Settings
+                </button>
+            </div>
+            <div id="cfgStatusMsg" style="font-size: 11px; margin-top: 4px; display: none;"></div>
+        </div>
+
+        <div class="nle-card">
+            <div class="nle-card-title">Video Audit Parameters</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div class="form-group-block">
+                    <label class="form-label-title">Frame Sampling Rate:</label>
+                    <select id="cfgSamplingRate" class="nle-select">
+                        <option value="1">1 Frame / Second</option>
+                        <option value="2">2 Frames / Second</option>
+                        <option value="cuts">Cut Points Only (Keyframes)</option>
+                    </select>
+                </div>
+                <div class="form-group-block">
+                    <label class="form-label-title">Analysis Proxy Quality:</label>
+                    <select id="cfgProxyRes" class="nle-select">
+                        <option value="720p">720p H.264 (Balanced)</option>
+                        <option value="480p">480p H.264 (High Speed)</option>
+                        <option value="1080p">1080p H.264 (Fine Detail)</option>
+                    </select>
+                </div>
+            </div>
         </div>
     </section>
 

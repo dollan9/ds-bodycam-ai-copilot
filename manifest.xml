@@ -4,7 +4,7 @@
         <Id>com.bodycam.resolve.aicopilot</Id>
         <Name>DS Bodycam AI Copilot</Name>
         <Version>1.0</Version>
-        <Description>DS Bodycam AI Copilot for DaVinci Resolve Studio</Description>
+        <Description>Professional AI Copilot for Bodycam and True Crime Video Editing in DaVinci Resolve Studio</Description>
         <FilePath>main.js</FilePath>
     </Plugin>
 </BlackmagicDesign>

@@ -1,90 +1,113 @@
-# DS Bodycam AI Copilot - DaVinci Resolve Workflow Integration Plugin
+# DS Bodycam AI Copilot - DaVinci Resolve Studio Workflow Integration
 
-An autonomous AI Copilot Workflow Integration Plugin for **DaVinci Resolve Studio**, tailored specifically for police bodycam and true crime video editing workflows.
+Autonomous AI Copilot Workflow Integration Plugin for **DaVinci Resolve Studio**, engineered specifically for documentary-grade police bodycam and true crime video editing workflows (matching standards set by EWU Bodycam, The Hidden Files, and Law&Crime).
 
-Built as an embedded Electron panel loaded directly via DaVinci Resolve's native `Workspace -> Workflow Integrations` menu, communicating with a lightweight local Python background server and the DaVinci Resolve Studio Scripting API.
-
----
-
-## 🎯 Key Features
-
-1. **Integrated AI Copilot Chat**
-   - Natural language interaction inside DaVinci Resolve.
-   - Domain-specific editing guidance for true crime and bodycam documentary standards (EWU, The Hidden Files, Law&Crime).
-   - Clickable timecode tags in chat that automatically jump the DaVinci playhead to the exact frame.
-
-2. **Timeline Analysis Engine ("Analysera Tidslinje")**
-   - Reads all video tracks, audio tracks, clip names, in/out points, frame durations, and markers via DaVinci Studio Scripting API.
-   - Pushes full timeline metadata to the local Python server (`POST /api/timeline/analyze`).
-   - Analyzes clip pacing, detects excessively long unbroken takes (>25s), and flags missing audio layers or redactions.
-
-3. **Lossless Frame Snapshots (Zero-Export / No Render)**
-   - Captures pristine still frames directly from the active playhead position using Resolve's Gallery Still API (`GrabStill` + `ExportStills` + `DeleteStills`).
-   - Automatically cleans up the user's still album to avoid project bloat.
-   - Exports lossless PNGs in <100ms with instant thumbnail preview in the panel.
-   - Enables Vision AI inspection without rendering or exporting the timeline.
-
-4. **Redaction & Marker Tools**
-   - Place color-coded markers directly onto the timeline (Red = Blur/Censor, Blue = Incident, Green = Audio/Dialog, Yellow = B-roll).
-   - Timecode navigation input to jump playhead anywhere instantly.
-
-5. **Strict No-Render / Zero-Export Policy**
-   - Dedicated strictly to editing, pacing, censorship/blur tracking, and timeline analysis.
-   - Render tab and delivery settings are entirely omitted.
+Loaded as an embedded Electron panel directly via DaVinci Resolve Studio's native menu (`Workspace -> Workflow Integrations -> DS Bodycam AI Copilot`), communicating asynchronously with a local Python background engine (`127.0.0.1:8765`) and the DaVinci Resolve Scripting API (`DaVinciResolveScript` / `fusionscript`).
 
 ---
 
-## 🏗️ Architecture
+## Key Capabilities
+
+### 1. Multi-Provider AI Architecture
+- **Google Gemini API**: Native multimodal processing (`gemini-2.5-pro`, `gemini-2.5-flash`) for deep timeline reasoning and frame analysis.
+- **OpenAI API**: Full support for `gpt-4o` and reasoning models (`o3-mini`).
+- **Anthropic Claude**: Full support for `claude-3-7-sonnet`.
+- **Local / Self-Hosted Endpoints**: Connects to Ollama, LM Studio, or vLLM via OpenAI-compatible endpoints (`/v1`).
+- Secure key management stored locally in `config.json` with in-panel connection verification testing.
+
+### 2. Full Timeline Multimodal Video Audit Pipeline
+- **Critical Error Detection**: Identifies black flash gaps (<5 frames), offline/missing media, clip desyncs, and involuntary jump cuts.
+- **Privacy & PII Compliance**: Flags civilian faces, juvenile minors, license plates, mobile data terminals (MDTs/in-car laptops), and identity cards with exact `HH:MM:SS:FF` timecodes.
+- **Pacing & Storytelling**: Pinpoints unbroken dead-air (>20s), recommendable trim segments, and dramatic hook opportunities.
+- **Audio & Fairlight Intelligence**: Detects background siren/radio bleed, clipping audio, and dialog intelligibility issues requiring subtitle overlays.
+- **One-Click Remediation**: Clickable timecode pills immediately position the Resolve playhead; one-click action to place color-coded markers directly onto the active timeline (Red = Critical, Yellow = Censor/Blur, Blue = Pacing, Green = Hook).
+
+### 3. Agentic DaVinci Resolve Controller (`ResolveController`)
+- **Safety First**: Automatic duplicate backup timelines before executing AI-driven timeline edits.
+- **Timeline & Playhead Control**: Read/write timecodes, query track counts, and navigate playhead position (`SetCurrentTimecode`).
+- **Clip & Track Manipulation**: Enable/disable clips, adjust transform properties (Pan, Tilt, Zoom, Opacity), and set clip colors.
+- **Color & Audio Enhancements**: Apply CDL primary color corrections and configure Fairlight voice isolation directly via scripting commands.
+- **Lossless Frame Capture**: Captures uncompressed still frames in <100ms using the internal Gallery Still API (`GrabStill` + `ExportStills` + `DeleteStills`) without rendering or touching the Deliver page.
+
+### 4. DaVinci Dark Carbon Professional Design System
+- Built to match Blackmagic Design, Frame.io, and Linear NLE interfaces.
+- DaVinci Dark Carbon palette (`#121215`, `#18181c`, `#202026`) with Resolve Orange (`#e15a29`) and Technical Cyan (`#0ea5e9`).
+- High-density typography (`Inter` + `JetBrains Mono` for timecodes).
+- Sharp monochrome SVG iconography with zero system emojis.
+- High-efficiency telemetry bar displaying live engine status, Resolve connection, project name, active timeline, FPS, and clip counts.
+
+---
+
+## Directory Structure
 
 ```
 com.bodycam.resolve.aicopilot/
-├── manifest.xml             # Blackmagic Workflow Integration Manifest (v1.0)
-├── package.json             # Electron configuration
+├── manifest.xml             # Blackmagic Workflow Integration Manifest (v1.0, CRLF line endings)
+├── package.json             # Electron application configuration
 ├── WorkflowIntegration.node # BMD native C++ Node.js addon
-├── main.js                  # Electron main process (IPC handlers & Resolve API bridge)
-├── preload.js               # Context-isolated secure bridge with input sanitization
-├── index.html               # Resolve Studio dark-themed UI panel
-├── renderer.js              # Event handling & REST client
+├── main.js                  # Electron main process (IPC handlers & file streamer)
+├── preload.js               # Context-isolated secure bridge with timecode regex sanitization
+├── index.html               # High-density DaVinci Dark Carbon NLE interface
+├── renderer.js              # Telemetry polling, chat streaming, and action dispatcher
 ├── css/
-│   └── styles.css           # DaVinci Resolve Studio dark theme
-├── server.py                # Python 3.11 background server (localhost:8765)
-├── test_server.py           # Automated test suite (4/4 passed)
+│   └── styles.css           # Professional NLE styling (zero emojis, custom scrollbars)
+├── server.py                # Python 3.11 background server & ResolveController (127.0.0.1:8765)
+├── test_server.py           # Automated test suite (7/7 tests passed)
+├── config.example.json      # Configuration template for multi-provider API keys
 ├── start_copilot_server.bat # Windows Batch launcher
 ├── start_copilot_server.ps1 # PowerShell launcher
-└── snapshots/               # Directory for frame captures
+└── snapshots/               # Directory for lossless frame grabs
 ```
 
 ---
 
-## 🚀 Installation & Deployment
+## Installation & Setup
 
-### Windows Plugin Paths
-Place the `com.bodycam.resolve.aicopilot` directory into:
-- `%PROGRAMDATA%\Blackmagic Design\DaVinci Resolve\Support\Workflow Integration Plugins\`
-- `%PROGRAMDATA%\Blackmagic Design\DaVinci Resolve\Support\Developer\Workflow Integration Plugins\`
+### 1. Prerequisites
+- **DaVinci Resolve Studio 18, 19, or 21+** (Studio edition required for external scripting API and Workflow Integrations).
+- **Python 3.10+** (Python 3.11 recommended).
+- **Node.js** (Optional, for standalone Electron development).
 
-### Running the Python Background Server
+### 2. Plugin Deployment Paths
+Copy the `com.bodycam.resolve.aicopilot` folder to both official Blackmagic Design Workflow Integration directories on Windows:
+```
+%PROGRAMDATA%\Blackmagic Design\DaVinci Resolve\Support\Workflow Integration Plugins\
+%PROGRAMDATA%\Blackmagic Design\DaVinci Resolve\Support\Developer\Workflow Integration Plugins\
+```
+
+### 3. Launching the Background Engine
+In PowerShell or Command Prompt:
 ```powershell
 python server.py
-# Or double click start_copilot_server.bat
+# Or execute start_copilot_server.bat
 ```
-The server runs on `http://127.0.0.1:8765`.
+The engine starts on `http://127.0.0.1:8765`.
 
-### Launching in DaVinci Resolve Studio
-1. Launch **DaVinci Resolve Studio**.
-2. Open any project with a timeline.
-3. In the top menu, navigate to:  
+### 4. Opening in DaVinci Resolve Studio
+1. Open **DaVinci Resolve Studio**.
+2. Open any project and timeline.
+3. In the top application menu bar, navigate to:  
    **Workspace** ➔ **Workflow Integrations** ➔ **DS Bodycam AI Copilot**.
+4. Configure your preferred AI provider and API key in the **Settings & API** tab.
 
 ---
 
-## 🧪 Testing
-Run the automated test suite:
+## Automated Verification & Testing
+
+Execute the comprehensive test suite:
 ```powershell
 python test_server.py
 ```
+Validates:
+- Health and telemetry endpoints (`/api/status`)
+- Multi-provider configuration retrieval and key testing (`/api/config`, `/api/config/test`)
+- Chat reasoning engine (`/api/chat`)
+- Timeline track and clip inspection (`/api/timeline/inspect`)
+- End-to-end video audit pipeline (`/api/timeline/audit`)
+- Agentic Resolve command execution (`/api/resolve/execute`)
+- Lossless frame snapshot retrieval (`/api/snapshots`)
 
 ---
 
-## 📄 License
-MIT / Proprietary Blackmagic Design Workflow Integration API terms apply.
+## License & Compliance
+This software communicates with Blackmagic Design DaVinci Resolve Studio via official public scripting modules and workflow integration specifications. All rights reserved.

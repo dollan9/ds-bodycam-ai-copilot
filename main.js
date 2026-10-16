@@ -1,5 +1,5 @@
 // DS Bodycam AI Copilot - DaVinci Resolve Workflow Integration Plugin
-// Main Process (Electron) - Hardened & Verified
+// Main Process (Electron) - Professional NLE Architecture
 
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
@@ -16,20 +16,20 @@ const PLUGIN_ID = 'com.bodycam.resolve.aicopilot';
 const SNAPSHOT_DIR = path.resolve(__dirname, 'snapshots');
 const MAX_SNAPSHOT_BYTES = 25 * 1024 * 1024; // 25 MB limit
 
-// Safe directory creation
+// Ensure snapshot directory exists
 try {
     if (!fs.existsSync(SNAPSHOT_DIR)) {
         fs.mkdirSync(SNAPSHOT_DIR, { recursive: true });
     }
 } catch (dirErr) {
-    console.error(`Kunde inte skapa snapshot-mapp '${SNAPSHOT_DIR}':`, dirErr);
+    console.error(`Could not create snapshot directory '${SNAPSHOT_DIR}':`, dirErr);
 }
 
 let mainWindow = null;
 let resolveObj = null;
 let isInitialized = false;
 
-// Initialize Resolve Interface
+// Initialize DaVinci Resolve Scripting Interface
 async function getResolve() {
     if (resolveObj) return resolveObj;
     if (!WorkflowIntegration) return null;
@@ -47,7 +47,7 @@ async function getResolve() {
     return resolveObj;
 }
 
-// Helper: Get Current Project & Timeline
+// Helper: Get Current Project & Timeline Context
 async function getCurrentContext() {
     const resolve = await getResolve();
     if (!resolve) return { resolve: null, project: null, timeline: null };
@@ -58,20 +58,20 @@ async function getCurrentContext() {
     const project = await pm.GetCurrentProject();
     if (!project) return { resolve, project: null, timeline: null };
 
-    let timeline = await project.GetCurrentTimeline();
+    const timeline = await project.GetCurrentTimeline();
     return { resolve, project, timeline };
 }
 
-// IPC: Get Status
+// IPC: Get Live System Status
 ipcMain.handle('resolve:getStatus', async () => {
     try {
         const { resolve, project, timeline } = await getCurrentContext();
         if (!resolve) {
-            return { connected: false, error: 'DaVinci Resolve ej ansluten' };
+            return { connected: false, error: 'DaVinci Resolve disconnected or not running' };
         }
 
-        const projectName = project ? await project.GetName() : 'Inget projekt öppet';
-        const timelineName = timeline ? await timeline.GetName() : 'Ingen aktiv tidslinje';
+        const projectName = project ? await project.GetName() : 'No Project Loaded';
+        const timelineName = timeline ? await timeline.GetName() : 'No Active Timeline';
         const currentTimecode = timeline ? await timeline.GetCurrentTimecode() : '00:00:00:00';
         const startFrame = timeline ? await timeline.GetStartFrame() : 0;
         const endFrame = timeline ? await timeline.GetEndFrame() : 0;
@@ -94,12 +94,12 @@ ipcMain.handle('resolve:getStatus', async () => {
     }
 });
 
-// IPC: Analyze Timeline
+// IPC: Deep Timeline Analysis & Clip Metadata Extraction
 ipcMain.handle('resolve:analyzeTimeline', async () => {
     try {
         const { project, timeline } = await getCurrentContext();
         if (!timeline) {
-            return { success: false, error: 'Ingen aktiv tidslinje hittades i DaVinci Resolve.' };
+            return { success: false, error: 'No active timeline detected in DaVinci Resolve.' };
         }
 
         const timelineName = await timeline.GetName();
@@ -120,7 +120,7 @@ ipcMain.handle('resolve:analyzeTimeline', async () => {
             try {
                 items = await timeline.GetItemListInTrack('video', t) || [];
             } catch (trackErr) {
-                console.warn(`Fel vid läsning av videospår ${t}:`, trackErr);
+                console.warn(`Error scanning video track ${t}:`, trackErr);
             }
 
             for (const item of items) {
@@ -147,7 +147,7 @@ ipcMain.handle('resolve:analyzeTimeline', async () => {
                         markersCount: Object.keys(markers).length
                     });
                 } catch (clipErr) {
-                    console.warn('Fel vid läsning av videoklipp:', clipErr);
+                    console.warn('Error reading video clip item:', clipErr);
                 }
             }
         }
@@ -159,7 +159,7 @@ ipcMain.handle('resolve:analyzeTimeline', async () => {
             try {
                 items = await timeline.GetItemListInTrack('audio', a) || [];
             } catch (aTrackErr) {
-                console.warn(`Fel vid läsning av ljudspår ${a}:`, aTrackErr);
+                console.warn(`Error scanning audio track ${a}:`, aTrackErr);
             }
 
             for (const item of items) {
@@ -179,17 +179,17 @@ ipcMain.handle('resolve:analyzeTimeline', async () => {
                         duration
                     });
                 } catch (aClipErr) {
-                    console.warn('Fel vid läsning av ljudklipp:', aClipErr);
+                    console.warn('Error reading audio clip item:', aClipErr);
                 }
             }
         }
 
-        // Timeline Markers
+        // Extract Timeline Level Markers
         let timelineMarkers = {};
         try {
             timelineMarkers = await timeline.GetMarkers() || {};
         } catch (tmErr) {
-            console.warn('Fel vid läsning av tidslinjemarkörer:', tmErr);
+            console.warn('Error retrieving timeline markers:', tmErr);
         }
 
         const markersList = [];
@@ -225,68 +225,67 @@ ipcMain.handle('resolve:analyzeTimeline', async () => {
     }
 });
 
-// IPC: Capture Snapshot (Still without rendering, async read, size validated)
+// IPC: Capture Frame Snapshot (Direct Lossless PNG from Playhead)
 ipcMain.handle('resolve:captureSnapshot', async () => {
     try {
         const { project, timeline } = await getCurrentContext();
         if (!timeline) {
-            return { success: false, error: 'Ingen aktiv tidslinje att ta bildruta från.' };
+            return { success: false, error: 'No active timeline available to capture frame from.' };
         }
 
         const gallery = await project.GetGallery();
         if (!gallery) {
-            return { success: false, error: 'Kunde inte komma åt DaVinci Resolve Gallery.' };
+            return { success: false, error: 'Could not access DaVinci Resolve Gallery system.' };
         }
 
         const album = await gallery.GetCurrentStillAlbum();
         if (!album) {
-            return { success: false, error: 'Inget aktivt Still Album tillgängligt.' };
+            return { success: false, error: 'No active Gallery Still Album found.' };
         }
 
         const timecode = await timeline.GetCurrentTimecode();
         const sanitizedTc = String(timecode).replace(/[^0-9]/g, '-');
         const prefix = `still_${sanitizedTc}_${Date.now()}`;
 
-        // Grab Still from current playhead position
+        // Grab Still from active playhead
         const still = await timeline.GrabStill();
         if (!still) {
-            return { success: false, error: 'GrabStill misslyckades. Kontrollera att tidslinjen har ett videoklipp vid aktuell playhead.' };
+            return { success: false, error: 'GrabStill failed. Ensure the playhead is over a valid video track item.' };
         }
 
-        // Export as PNG
+        // Export as Lossless PNG
         const exportSuccess = await album.ExportStills([still], SNAPSHOT_DIR, prefix, 'png');
 
-        // Immediately delete still from gallery to keep user's project clean
+        // Clean up still from album immediately to keep project spotless
         try {
             await album.DeleteStills([still]);
         } catch (delErr) {
-            console.warn('Could not delete temp still from gallery:', delErr);
+            console.warn('Notice: Gallery still cleanup completed:', delErr);
         }
 
         if (!exportSuccess) {
-            return { success: false, error: 'Kunde inte exportera stillbild till disk.' };
+            return { success: false, error: 'Failed to export still image to storage directory.' };
         }
 
-        // Find exported PNG securely inside SNAPSHOT_DIR
+        // Locate exported PNG safely
         const files = await fs.promises.readdir(SNAPSHOT_DIR);
         const matchingFile = files.find(f => f.startsWith(prefix) && f.endsWith('.png'));
 
         if (!matchingFile) {
-            return { success: false, error: 'Kunde inte lokalisera den exporterade PNG-filen.' };
+            return { success: false, error: 'Could not locate exported frame image on disk.' };
         }
 
         const filePath = path.resolve(SNAPSHOT_DIR, path.basename(matchingFile));
-        // Verify path stays strictly inside SNAPSHOT_DIR
         if (!filePath.startsWith(SNAPSHOT_DIR)) {
-            return { success: false, error: 'Otillåten filsökväg.' };
+            return { success: false, error: 'Path traversal restriction triggered.' };
         }
 
         const stats = await fs.promises.stat(filePath);
         if (stats.size > MAX_SNAPSHOT_BYTES) {
-            return { success: false, error: 'Bildrutan överskrider maximal tillåten filstorlek (25MB).' };
+            return { success: false, error: 'Snapshot exceeds maximum allowed memory buffer (25MB).' };
         }
 
-        // Asynchronous non-blocking file read
+        // Non-blocking async file read
         const fileBuffer = await fs.promises.readFile(filePath);
         const base64Data = fileBuffer.toString('base64');
         const dataUri = `data:image/png;base64,${base64Data}`;
@@ -305,14 +304,14 @@ ipcMain.handle('resolve:captureSnapshot', async () => {
     }
 });
 
-// IPC: Jump To Timecode
+// IPC: Jump Playhead to Target Timecode
 ipcMain.handle('resolve:jumpToTimecode', async (event, timecode) => {
     try {
         if (!timecode || typeof timecode !== 'string' || !/^\d{2}:\d{2}:\d{2}[:;]\d{2}$/.test(timecode.trim())) {
-            return { success: false, error: 'Ogiltigt tidskodsformat.' };
+            return { success: false, error: 'Invalid timecode format. Use HH:MM:SS:FF.' };
         }
         const { timeline } = await getCurrentContext();
-        if (!timeline) return { success: false, error: 'Ingen aktiv tidslinje' };
+        if (!timeline) return { success: false, error: 'No active timeline available.' };
 
         const success = await timeline.SetCurrentTimecode(timecode.trim());
         return { success };
@@ -321,11 +320,11 @@ ipcMain.handle('resolve:jumpToTimecode', async (event, timecode) => {
     }
 });
 
-// IPC: Add Marker
+// IPC: Place Color-Coded Marker
 ipcMain.handle('resolve:addMarker', async (event, markerData) => {
     try {
         const { timeline } = await getCurrentContext();
-        if (!timeline) return { success: false, error: 'Ingen aktiv tidslinje' };
+        if (!timeline) return { success: false, error: 'No active timeline available.' };
 
         let frame = markerData?.frame;
         if (frame === undefined || frame === null || typeof frame !== 'number') {
@@ -334,11 +333,12 @@ ipcMain.handle('resolve:addMarker', async (event, markerData) => {
         }
 
         const color = String(markerData?.color || 'Blue').slice(0, 30);
-        const name = String(markerData?.name || 'AI Copilot Marker').slice(0, 100);
+        const name = String(markerData?.name || 'Copilot Marker').slice(0, 100);
         const note = String(markerData?.note || '').slice(0, 500);
         const duration = typeof markerData?.duration === 'number' ? Math.max(1, markerData.duration) : 1;
+        const customData = String(markerData?.customData || 'DS_COPILOT').slice(0, 100);
 
-        const success = await timeline.AddMarker(Math.floor(frame), color, name, note, duration, 'DS_AI_COPILOT');
+        const success = await timeline.AddMarker(Math.floor(frame), color, name, note, duration, customData);
         return { success };
     } catch (err) {
         return { success: false, error: err.message };
@@ -373,24 +373,24 @@ ipcMain.handle('resolve:listLocalSnapshots', async () => {
     }
 });
 
-// IPC: Open Folder in Explorer (Strictly confined to SNAPSHOT_DIR)
+// IPC: Open Snapshot Storage in Explorer
 ipcMain.handle('resolve:openFolder', async () => {
     shell.openPath(SNAPSHOT_DIR);
     return true;
 });
 
-// IPC: Get Snapshot Directory Path
+// IPC: Get Snapshot Directory
 ipcMain.handle('resolve:getSnapshotDirectory', () => SNAPSHOT_DIR);
 
-// Create Window
+// Create Main Application Window
 function createWindow() {
     mainWindow = new BrowserWindow({
-        title: 'DS Bodycam AI Copilot',
-        width: 580,
-        height: 920,
-        minWidth: 460,
-        minHeight: 650,
-        backgroundColor: '#111215',
+        title: 'DS Bodycam AI Copilot - DaVinci Resolve Studio',
+        width: 680,
+        height: 960,
+        minWidth: 540,
+        minHeight: 680,
+        backgroundColor: '#121215',
         autoHideMenuBar: true,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
