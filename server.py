@@ -41,6 +41,7 @@ DEFAULT_CONFIG = {
     "gemini_api_key": "",
     "openai_api_key": "",
     "anthropic_api_key": "",
+    "nvidia_api_key": "",
     "local_endpoint_url": "http://localhost:11434/v1",
     "sampling_rate_fps": 1,
     "proxy_resolution": "720p",
@@ -474,6 +475,34 @@ class AIProviderService:
             except Exception as e:
                 return False, f"Anthropic Error: {str(e)}"
 
+        elif provider == "nvidia":
+            if not api_key:
+                return False, "NVIDIA API key is required."
+            model_name = model or "nvidia/nemotron-3.5-super-vl-120b-a12b"
+            url = "https://integrate.api.nvidia.com/v1/chat/completions"
+            payload = {
+                "model": model_name,
+                "messages": [{"role": "user", "content": "ping"}],
+                "max_tokens": 50
+            }
+            try:
+                req = urllib.request.Request(
+                    url,
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {api_key}"
+                    }
+                )
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    if resp.status == 200:
+                        return True, f"NVIDIA NIM verified ({model_name})."
+            except urllib.error.HTTPError as e:
+                err_body = e.read().decode("utf-8", errors="ignore")
+                return False, f"NVIDIA HTTP Error {e.code}: {err_body}"
+            except Exception as e:
+                return False, f"NVIDIA Error: {str(e)}"
+
         elif provider == "local_openai":
             base_url = endpoint or "http://localhost:11434/v1"
             url = f"{base_url.rstrip('/')}/models"
@@ -488,18 +517,74 @@ class AIProviderService:
         return False, f"Unsupported provider '{provider}'"
 
     @classmethod
-    def query_llm(cls, prompt, system_instruction="", context_dict=None):
+    def query_llm(cls, prompt, system_instruction="", context_dict=None, image_data=None):
         config = load_config()
-        provider = config.get("active_provider", "gemini")
+        provider = config.get("active_provider", "nvidia")
         api_key = config.get(f"{provider}_api_key", "")
-        model = config.get("active_model", "gemini-2.5-flash")
+        model = config.get("active_model", "nvidia/nemotron-3.5-super-vl-120b-a12b")
 
         # Fallback to local heuristic rule engine if no API key is configured
         if not api_key and provider != "local_openai":
             return cls.local_copilot_engine(prompt, context_dict)
 
+        # NVIDIA NIM (Nemotron 3.5 Super VL 120B Multimodal Reasoning) implementation
+        if provider == "nvidia":
+            url = "https://integrate.api.nvidia.com/v1/chat/completions"
+            full_text = f"Context:\n{json.dumps(context_dict or {}, indent=2)}\n\nUser Request: {prompt}"
+            
+            if image_data:
+                user_msg_content = [
+                    {"type": "text", "text": full_text},
+                    {"type": "image_url", "image_url": {"url": image_data}}
+                ]
+            else:
+                user_msg_content = full_text
+
+            messages = [
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": user_msg_content}
+            ]
+            payload = {
+                "model": model,
+                "messages": messages,
+                "temperature": 1.0,
+                "top_p": 0.95,
+                "max_tokens": 8192,
+                "chat_template_kwargs": {"enable_thinking": True}
+            }
+            try:
+                req = urllib.request.Request(
+                    url,
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {api_key}"
+                    }
+                )
+                with urllib.request.urlopen(req, timeout=45) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    msg = data["choices"][0]["message"]
+                    reasoning = msg.get("reasoning_content") or ""
+                    content = msg.get("content") or ""
+
+                    if reasoning and content:
+                        return f"""<details class="reasoning-block" open>
+<summary class="reasoning-summary">Nemotron 3.5 Thought Process</summary>
+<div class="reasoning-content">{reasoning}</div>
+</details>
+
+{content}"""
+                    elif content:
+                        return content
+                    elif reasoning:
+                        return reasoning
+                    return "No content returned from NVIDIA NIM."
+            except Exception as e:
+                print(f"[AIProviderService] NVIDIA NIM query error: {e}")
+                return cls.local_copilot_engine(prompt, context_dict)
+
         # Gemini implementation
-        if provider == "gemini":
+        elif provider == "gemini":
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
             full_prompt = f"{system_instruction}\n\nContext Data:\n{json.dumps(context_dict or {}, indent=2)}\n\nUser Request: {prompt}"
             payload = {
@@ -807,7 +892,7 @@ class CopilotServerHandler(http.server.BaseHTTPRequestHandler):
             config = load_config()
             # Mask keys for security
             masked = dict(config)
-            for k in ["gemini_api_key", "openai_api_key", "anthropic_api_key"]:
+            for k in ["gemini_api_key", "openai_api_key", "anthropic_api_key", "nvidia_api_key"]:
                 if masked.get(k):
                     val = masked[k]
                     masked[k] = f"{val[:4]}...{val[-4:]}" if len(val) > 8 else "***"
@@ -876,6 +961,7 @@ class CopilotServerHandler(http.server.BaseHTTPRequestHandler):
         # 1. Copilot Conversational Query
         if path == "/api/chat":
             prompt = body.get("prompt", "").strip()
+            image_data = body.get("image_data") or body.get("snapshot")
             system_instruction = (
                 "You are the Lead Master NLE AI Copilot for Blackmagic DaVinci Resolve Studio, "
                 "specialized in police bodycam and true crime documentary post-production. "
@@ -883,7 +969,7 @@ class CopilotServerHandler(http.server.BaseHTTPRequestHandler):
                 "color grading adjustments, Fairlight audio routing, or camera angles when suggesting cuts."
             )
             deep_data = ResolveController.get_deep_timeline_data()
-            response_text = AIProviderService.query_llm(prompt, system_instruction, deep_data)
+            response_text = AIProviderService.query_llm(prompt, system_instruction, deep_data, image_data=image_data)
 
             self.send_response(200)
             self._send_cors()

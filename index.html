@@ -292,6 +292,7 @@
             <div class="form-group-block">
                 <label class="form-label-title">Active AI Provider:</label>
                 <select id="cfgProvider" class="nle-select">
+                    <option value="nvidia">NVIDIA NIM (Nemotron 3.5 Super VL 120B Multimodal Reasoning)</option>
                     <option value="gemini">Google Gemini API (Multimodal Video & Audio)</option>
                     <option value="openai">OpenAI API (GPT-4o / o3-mini)</option>
                     <option value="anthropic">Anthropic API (Claude 3.7 Sonnet)</option>
@@ -301,7 +302,7 @@
 
             <div class="form-group-block">
                 <label class="form-label-title">Active Model Selection:</label>
-                <input type="text" id="cfgModel" class="nle-search-field mono" value="gemini-2.5-flash">
+                <input type="text" id="cfgModel" class="nle-search-field mono" value="nvidia/nemotron-3.5-super-vl-120b-a12b">
             </div>
 
             <div class="form-group-block">

@@ -531,6 +531,8 @@ async function loadServerConfig() {
             if (data.active_provider) cfgProvider.value = data.active_provider;
             if (data.active_model) cfgModel.value = data.active_model;
             if (data.local_endpoint_url) cfgEndpoint.value = data.local_endpoint_url;
+            const keyForActive = data[`${data.active_provider}_api_key`];
+            if (keyForActive) cfgApiKey.value = keyForActive;
             grpLocalEndpoint.style.display = cfgProvider.value === 'local_openai' ? 'flex' : 'none';
         }
     } catch (e) {
@@ -542,7 +544,8 @@ loadServerConfig();
 cfgProvider.addEventListener('change', () => {
     const p = cfgProvider.value;
     grpLocalEndpoint.style.display = p === 'local_openai' ? 'flex' : 'none';
-    if (p === 'gemini') cfgModel.value = 'gemini-2.5-flash';
+    if (p === 'nvidia') cfgModel.value = 'nvidia/nemotron-3.5-super-vl-120b-a12b';
+    else if (p === 'gemini') cfgModel.value = 'gemini-2.5-flash';
     else if (p === 'openai') cfgModel.value = 'gpt-4o';
     else if (p === 'anthropic') cfgModel.value = 'claude-3-7-sonnet';
     else if (p === 'local_openai') cfgModel.value = 'deepseek-r1';

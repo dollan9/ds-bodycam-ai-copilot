@@ -128,5 +128,24 @@ class TestCopilotEngine(unittest.TestCase):
             data = json.loads(resp.read().decode("utf-8"))
             self.assertIn("snapshots", data)
 
+    def test_08_nvidia_provider_test(self):
+        url = f"http://127.0.0.1:{PORT}/api/config/test"
+        payload = {
+            "provider": "nvidia",
+            "api_key": "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",
+            "model": "nvidia/nemotron-3.5-super-vl-120b-a12b"
+        }
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            data = json.loads(resp.read().decode("utf-8"))
+            self.assertTrue(data["success"])
+            self.assertIn("NVIDIA NIM verified", data["message"])
+
 if __name__ == "__main__":
     unittest.main()
+
