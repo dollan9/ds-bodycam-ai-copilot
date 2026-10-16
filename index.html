@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DS Bodycam AI Copilot</title>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <!-- Top Header -->
+    <header>
+        <div class="header-top">
+            <div class="logo-group">
+                <div class="app-icon">DS</div>
+                <div class="app-title">DS Bodycam AI Copilot</div>
+                <span class="badge-version">v1.0</span>
+            </div>
+            <div class="status-badges">
+                <div class="status-pill" id="pillResolve" title="DaVinci Resolve Scripting API status">
+                    <span class="status-dot" id="dotResolve"></span>
+                    <span id="txtResolve">Resolve</span>
+                </div>
+                <div class="status-pill" id="pillServer" title="Lokal Python AI-Server status (localhost:8765)">
+                    <span class="status-dot" id="dotServer"></span>
+                    <span id="txtServer">AI-Server</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-meta">
+            <div>
+                <strong>Projekt:</strong> <span id="lblProject">Laddar...</span> |
+                <strong>Tidslinje:</strong> <span id="lblTimeline">-</span>
+            </div>
+            <div>
+                <strong>Playhead:</strong> <span class="tc-display" id="lblTimecode" title="Klicka för att uppdatera">00:00:00:00</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs (NO RENDER TAB!) -->
+    <nav class="nav-tabs">
+        <button class="tab-btn active" data-tab="tab-chat">
+            💬 AI Copilot
+        </button>
+        <button class="tab-btn" data-tab="tab-timeline">
+            ⏱️ Tidslinje
+        </button>
+        <button class="tab-btn" data-tab="tab-snapshots">
+            📸 Snapshots
+        </button>
+        <button class="tab-btn" data-tab="tab-tools">
+            ⚡ Snabbverktyg
+        </button>
+    </nav>
+
+    <!-- Tab 1: AI Copilot (Chat) -->
+    <main id="tab-chat" class="tab-content active">
+        <div class="chat-container">
+            <!-- Quick Chips -->
+            <div class="quick-prompts">
+                <button class="prompt-chip" data-prompt="Analysera klipptempo och föreslå förbättringar">📊 Analysera tempo</button>
+                <button class="prompt-chip" data-prompt="Vilka ställen på tidslinjen behöver maskas eller censureras (blur)?">🛡️ Föreslå blur/censor</button>
+                <button class="prompt-chip" data-prompt="Hur bör jag hantera 911-ljud och radioanrop för bäst retention?">🎙️ Audio ducking</button>
+                <button class="prompt-chip" data-prompt="Generera 4 fängslande YouTube-titlar för detta fall">🎯 YouTube-titlar</button>
+            </div>
+
+            <!-- Chat Stream -->
+            <div class="chat-history" id="chatHistory">
+                <div class="chat-msg assistant">
+                    <div class="msg-header">
+                        <span>DS AI Copilot</span> • <span>System</span>
+                    </div>
+                    <div class="msg-bubble">
+                        Välkommen till <strong>DS Bodycam AI Copilot</strong> för DaVinci Resolve Studio!<br><br>
+                        Jag är redo att assistera dig med redigeringen av ditt bodycam- och brottsfallsmaterial.
+                        Klicka på <strong>"Analysera Tidslinje"</strong> för att ladda in dina klipp, eller <strong>"Ta Snapshot"</strong> för att låta mig granska en bildruta direkt från spelaren.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input-box">
+                <textarea id="chatInput" class="chat-textarea" placeholder="Skriv din instruktion eller fråga till AI-copiloten... (Enter för att skicka, Shift+Enter för radbrytning)"></textarea>
+                <button id="btnSendChat" class="btn-send">Skicka</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Tab 2: Tidslinje (Timeline Explorer & Analysis) -->
+    <section id="tab-timeline" class="tab-content">
+        <div class="timeline-header-card">
+            <button id="btnAnalyzeTimeline" class="btn-large">
+                🔍 Analysera Tidslinje Nu
+            </button>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value" id="statClips">0</div>
+                    <div class="stat-label">Klipp</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="statTracks">0</div>
+                    <div class="stat-label">Videospår</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="statMarkers">0</div>
+                    <div class="stat-label">Markörer</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="statDuration">-</div>
+                    <div class="stat-label">Tid</div>
+                </div>
+            </div>
+            <input type="text" id="clipSearchInput" class="search-box" placeholder="Sök bland klipp på tidslinjen...">
+        </div>
+
+        <!-- Clips Table -->
+        <div class="clips-table-container">
+            <table class="clips-table" id="clipsTable">
+                <thead>
+                    <tr>
+                        <th style="width: 45px;">Spår</th>
+                        <th>Klippnamn</th>
+                        <th style="width: 75px;">In (Frame)</th>
+                        <th style="width: 75px;">Ut (Frame)</th>
+                        <th style="width: 65px;">Längd</th>
+                        <th style="width: 65px;">Åtgärd</th>
+                    </tr>
+                </thead>
+                <tbody id="clipsTableBody">
+                    <tr>
+                        <td colspan="6" class="empty-state">Klicka på "Analysera Tidslinje Nu" för att läsa in klippen från DaVinci Resolve.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Tab 3: Snapshots (Frame Capture directly from Player) -->
+    <section id="tab-snapshots" class="tab-content">
+        <div class="snapshot-info-banner">
+            📸 <strong>Direkt Bildrutefångst:</strong> Fångar bildrutan vid aktuell playhead i DaVinci Resolve och sparar som fullupplöst PNG så att AI:n kan se bildrutan omedelbart <em>helt utan videorendering eller export</em>.
+        </div>
+
+        <div class="snapshot-bar">
+            <button id="btnTakeSnapshot" class="btn-large" style="flex: 1;">
+                📸 Ta Snapshot Nu
+            </button>
+            <button id="btnOpenSnapshotsFolder" class="btn-secondary">
+                📁 Öppna Mapp
+            </button>
+        </div>
+
+        <div class="snapshots-grid" id="snapshotsGrid">
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                Inga bildrutor tagna än. Placera playhead i DaVinci-spelaren och klicka på "Ta Snapshot Nu".
+            </div>
+        </div>
+    </section>
+
+    <!-- Tab 4: Snabbverktyg (Editing Shortcuts & Markers) -->
+    <section id="tab-tools" class="tab-content">
+        <div class="tools-card">
+            <div class="card-title">📌 Sätt Markör vid Aktuell Playhead</div>
+            <div class="form-group">
+                <label>Färgkod / Kategori:</label>
+                <div class="color-options">
+                    <label class="color-radio">
+                        <input type="radio" name="markerColor" value="Red" checked>
+                        <span style="color: #ef4444;">🔴 Röd (Blur/Censor)</span>
+                    </label>
+                    <label class="color-radio">
+                        <input type="radio" name="markerColor" value="Blue">
+                        <span style="color: #38bdf8;">🔵 Blå (Händelse)</span>
+                    </label>
+                    <label class="color-radio">
+                        <input type="radio" name="markerColor" value="Green">
+                        <span style="color: #10b981;">🟢 Grön (Ljud/Repliker)</span>
+                    </label>
+                    <label class="color-radio">
+                        <input type="radio" name="markerColor" value="Yellow">
+                        <span style="color: #f59e0b;">🟡 Gul (B-roll/Klipp)</span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Markörnamn:</label>
+                <input type="text" id="txtMarkerName" class="form-input" placeholder="t.ex. Maskera ansikte på vittne">
+            </div>
+            <div class="form-group">
+                <label>Anteckning (valfritt):</label>
+                <input type="text" id="txtMarkerNote" class="form-input" placeholder="Detaljer för redigeringen...">
+            </div>
+            <button id="btnAddMarker" class="btn-large">
+                Lägg till Markör på Tidslinjen
+            </button>
+        </div>
+
+        <div class="tools-card">
+            <div class="card-title">⏩ Hoppa till Tidskod</div>
+            <div class="form-group">
+                <label>Måltidskod (TT:MM:SS:FF):</label>
+                <input type="text" id="txtJumpTimecode" class="form-input" placeholder="01:00:00:00">
+            </div>
+            <button id="btnExecuteJump" class="btn-secondary" style="padding: 10px; font-weight: bold;">
+                Flytta DaVinci Playhead Hit
+            </button>
+        </div>
+    </section>
+
+    <!-- Logic Script -->
+    <script src="./renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Snapshots generated at runtime
+snapshots/*.png
+snapshots/*.drx
+!snapshots/.gitkeep
+
+# Environment & OS
+.env
+*.log
+.DS_Store
+Thumbs.db

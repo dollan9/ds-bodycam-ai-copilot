@@ -1,0 +1,11 @@
+{
+    "name": "ds-bodycam-ai-copilot",
+    "version": "1.0.0",
+    "description": "DS Bodycam AI Copilot - DaVinci Resolve Workflow Integration Plugin",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron ."
+    },
+    "author": "Antigravity",
+    "license": "UNLICENSED"
+}
